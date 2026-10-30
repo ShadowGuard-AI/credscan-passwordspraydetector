@@ -88,11 +88,14 @@ def detect_password_spraying(log_file, threshold):
                 )
         else:
             logging.info("No password spraying attacks detected based on the threshold.")
+        return True
 
     except FileNotFoundError:
         logging.error(f"Log file not found: {log_file}")
+        return False
     except Exception as e:
         logging.error(f"An error occurred: {e}")
+        return False
 
 
 def detect_credential_leaks(file_path, domains=None):
@@ -111,7 +114,7 @@ def detect_credential_leaks(file_path, domains=None):
         patterns = {
             "API Key": r"[A-Za-z0-9_-]{32,45}",  # Example: long alphanumeric string
             "Password": r"(password|pwd)\s*[:=]\s*[\"']?[\w\d!@#$%^&*()_+=\-`~\[\]\{\}\|;':\",\.\/<>\?]+[\"']?", #Basic password detection
-            "Email": r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b",
+            "Email": r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b",
             "AWS Key": r"AKIA[0-9A-Z]{16}",
             "Secret Key": r"[sS][ecret]*\_?[Kk][eys]*\s*[:=]\s*[\"']?[\w\d!@#$%^&*()_+=\-`~\[\]\{\}\|;':\",\.\/<>\?]+[\"']?"
         }
@@ -134,10 +137,13 @@ def detect_credential_leaks(file_path, domains=None):
                 if domain in domains:
                     logging.warning(f"Suspicious URL found with domain {domain}: {url}")
 
+        return True
     except FileNotFoundError:
         logging.error(f"File not found: {file_path}")
+        return False
     except Exception as e:
         logging.error(f"An error occurred: {e}")
+        return False
 
 
 def main():
@@ -151,10 +157,16 @@ def main():
         parser.print_help()
         sys.exit(1)
 
+    # Both detectors used to swallow a missing input file and let
+    # main exit 0, so a scripted run could not tell a failed scan
+    # from a clean one. A failed scan now exits 1; findings are
+    # still reported as warnings, not as a failed exit.
     if args.command == "spray":
-        detect_password_spraying(args.log_file, args.threshold)
+        if not detect_password_spraying(args.log_file, args.threshold):
+            sys.exit(1)
     elif args.command == "leak":
-        detect_credential_leaks(args.file_path, args.domains)
+        if not detect_credential_leaks(args.file_path, args.domains):
+            sys.exit(1)
 
 
 if __name__ == "__main__":
