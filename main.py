@@ -112,8 +112,13 @@ def detect_credential_leaks(file_path, domains=None):
 
         # Regex patterns for common credentials and sensitive information. Customize and expand as needed.
         patterns = {
+            # The password keyword group below is non-capturing on
+            # purpose: with a capturing group, findall returns the
+            # group ("password") instead of the whole match, so the
+            # report named the keyword and never showed the leaked
+            # value it was supposed to surface.
             "API Key": r"[A-Za-z0-9_-]{32,45}",  # Example: long alphanumeric string
-            "Password": r"(password|pwd)\s*[:=]\s*[\"']?[\w\d!@#$%^&*()_+=\-`~\[\]\{\}\|;':\",\.\/<>\?]+[\"']?", #Basic password detection
+            "Password": r"(?:password|pwd)\s*[:=]\s*[\"']?[\w\d!@#$%^&*()_+=\-`~\[\]\{\}\|;':\",\.\/<>\?]+[\"']?", #Basic password detection
             "Email": r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b",
             "AWS Key": r"AKIA[0-9A-Z]{16}",
             "Secret Key": r"[sS][ecret]*\_?[Kk][eys]*\s*[:=]\s*[\"']?[\w\d!@#$%^&*()_+=\-`~\[\]\{\}\|;':\",\.\/<>\?]+[\"']?"
