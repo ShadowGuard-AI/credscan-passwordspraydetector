@@ -32,7 +32,7 @@ def setup_argparse():
         "--threshold",
         type=int,
         default=5,
-        help="Threshold for failed login attempts from the same IP to flag as suspicious.",
+        help="Threshold for failed login attempts from the same IP. Spraying is flagged only when failures from one IP reach this count across distinct accounts; the same count against fewer accounts is flagged as brute force.",
     )
 
     # Credential leak detection subparser
@@ -59,34 +59,62 @@ def detect_password_spraying(log_file, threshold):
     Args:
         log_file (str): Path to the authentication log file.
         threshold (int): Number of failed attempts from an IP before flagging.
+            Spraying is flagged only when the failures from one IP reach
+            the threshold across distinct accounts. Failures reaching the
+            threshold against fewer accounts are flagged as brute force
+            against those accounts instead, not as spraying.
     """
     try:
         ip_failed_attempts = {}
+        ip_accounts = {}
         with open(log_file, "r") as f:
             for line in f:
-                #  Match failed login attempts. Adjust regex based on your log format.
+                #  Match failed login attempts, capturing the account as
+                #  well as the IP. Adjust regex based on your log format.
                 match = re.search(
-                    r"(?:Failed login|Authentication failure) for .* from (\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})",
+                    r"(?:Failed login|Authentication failure) for (?:user )?(\S+) from (\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})",
                     line,
                 )
                 if match:
-                    ip = match.group(1)
+                    account = match.group(1)
+                    ip = match.group(2)
                     ip_failed_attempts[ip] = ip_failed_attempts.get(ip, 0) + 1
+                    ip_accounts.setdefault(ip, set()).add(account)
 
-        # Identify suspicious IPs
-        suspicious_ips = [
-            ip for ip, count in ip_failed_attempts.items() if count >= threshold
+        # Spraying means one IP failing against many accounts, so the
+        # spraying flag needs the threshold met in distinct accounts,
+        # not just in raw failure count.
+        spraying_ips = [
+            ip
+            for ip, accounts in ip_accounts.items()
+            if len(accounts) >= threshold
+        ]
+        # The same raw count against fewer accounts is a different
+        # attack shape, so it gets its own label instead of borrowing
+        # the spraying one.
+        brute_force_ips = [
+            ip
+            for ip, count in ip_failed_attempts.items()
+            if count >= threshold and ip not in spraying_ips
         ]
 
-        if suspicious_ips:
+        if spraying_ips:
             logging.warning(
-                f"Potential password spraying attack detected.  The following IPs have exceeded the threshold ({threshold}):"
+                f"Potential password spraying attack detected.  The following IPs have failed against at least the threshold ({threshold}) distinct accounts:"
             )
-            for ip in suspicious_ips:
+            for ip in spraying_ips:
                 logging.warning(
-                    f"IP: {ip} - Failed attempts: {ip_failed_attempts[ip]}"
+                    f"IP: {ip} - Failed attempts: {ip_failed_attempts[ip]} - Distinct accounts: {len(ip_accounts[ip])}"
                 )
-        else:
+        if brute_force_ips:
+            logging.warning(
+                f"Potential brute force attack detected.  The following IPs have exceeded the threshold ({threshold}) against fewer distinct accounts, so this is not spraying:"
+            )
+            for ip in brute_force_ips:
+                logging.warning(
+                    f"IP: {ip} - Failed attempts: {ip_failed_attempts[ip]} - Distinct accounts: {len(ip_accounts[ip])}"
+                )
+        if not spraying_ips and not brute_force_ips:
             logging.info("No password spraying attacks detected based on the threshold.")
         return True
 
