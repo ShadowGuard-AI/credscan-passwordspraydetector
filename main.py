@@ -71,6 +71,9 @@ def detect_password_spraying(log_file, threshold):
             for line in f:
                 #  Match failed login attempts, capturing the account as
                 #  well as the IP. Adjust regex based on your log format.
+                # I accept only these two failure wordings, with the account
+                # before the IP. A log that writes its fields in another order,
+                # or words a failure differently, contributes nothing here.
                 match = re.search(
                     r"(?:Failed login|Authentication failure) for (?:user )?(\S+) from (\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})",
                     line,
@@ -158,6 +161,9 @@ def detect_credential_leaks(file_path, domains=None):
             if matches:
                 logging.warning(f"Potential {key} leak(s) found:")
                 for match in matches:
+                    # I log the matched text in full, including the value after a
+                    # password keyword. That is the leak this command exists to
+                    # surface, and it means the log itself becomes sensitive.
                     logging.warning(f"  - {match}")
 
         # Domain parsing for suspicious URLs
@@ -166,6 +172,9 @@ def detect_credential_leaks(file_path, domains=None):
             urls = re.findall(url_pattern, content)
             for url in urls:
                 ext = tldextract.extract(url)
+                # I compare the registered domain only. A URL on a subdomain
+                # of a listed domain matches, and a listed subdomain on its
+                # own never does, because the subdomain part is dropped here.
                 domain = ext.domain + "." + ext.suffix
                 if domain in domains:
                     logging.warning(f"Suspicious URL found with domain {domain}: {url}")
