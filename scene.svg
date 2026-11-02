@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 360" role="img" aria-label="Porch in three bands: rail and dark garden still while dusk deepens, lamp and wall where one fly at long intervals flies weakly around the lamp and settles, and screen mesh at close range with one resting fly whose legs adjust once">
+<rect width="1200" height="360" fill="#2B3A67"><animate attributeName="fill" values="#2B3A67;#232F55;#2B3A67" dur="26s" repeatCount="indefinite"/></rect>
+<rect y="290" width="1200" height="14" fill="#F5F0E6"/>
+<rect x="60" y="40" width="700" height="280" fill="#8C4A3C"/>
+<g stroke="#232323" stroke-width="1" opacity="0.55"><path d="M60 80 H760 M60 120 H760 M60 160 H760 M60 200 H760 M60 240 H760 M60 280 H760 M110 40 V320 M210 40 V320 M310 40 V320 M410 40 V320 M510 40 V320 M610 40 V320 M710 40 V320"/></g>
+<circle cx="950" cy="130" r="62" fill="#FAE196"/><circle cx="950" cy="130" r="34" fill="#FCF0BE"/>
+<g fill="#232323"><ellipse cx="880" cy="90" rx="20" ry="5"/><ellipse cx="1010" cy="210" rx="20" ry="5"/><g><ellipse cx="950" cy="130" rx="18" ry="4"/><animateMotion dur="16s" repeatCount="indefinite" path="M0 0 C 60 -50 90 10 40 52 C 0 84 -40 30 0 0"/></g></g>
+<g stroke="#232323" stroke-width="1"><path d="M60 330 H1140 M60 344 H1140 M80 322 V352 M140 322 V352 M200 322 V352 M260 322 V352 M320 322 V352 M380 322 V352 M440 322 V352 M500 322 V352 M560 322 V352 M620 322 V352 M680 322 V352 M740 322 V352 M800 322 V352 M860 322 V352 M920 322 V352 M980 322 V352 M1040 322 V352 M1100 322 V352"/></g>
+<g fill="#232323"><ellipse cx="600" cy="337" rx="22" ry="5"><animateTransform attributeName="transform" type="rotate" values="0 600 337;3 600 337;0 600 337" dur="20s" repeatCount="indefinite"/></ellipse></g>
+</svg>
